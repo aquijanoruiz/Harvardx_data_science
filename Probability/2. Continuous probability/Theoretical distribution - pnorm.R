@@ -37,3 +37,10 @@ pnorm(70.9,mean(x),sd(x)) - pnorm(70.1,mean(x),sd(x)) #Using the normal distribu
 #Discretization.- Although the true height distribution is continuous, the reported heights
 #tend to be more common at discrete values, in this case, due to rounding.
 
+#Probability of someone being taller than 76 incles
+avg <- mean(x)
+s<- sd(x)
+1 - pnorm(76,avg,s)
+
+#In R you get the probability density function for the normal distribution
+#using the function dnorm. #D stands for density.
