@@ -8,7 +8,7 @@ data(murders)
 #changes the data table by adding a new column or changes an existing one
 murders<- mutate(murders,rate=total/population*100000)
 head(murders)
-#he mutate function knows to look for these variables in the murders data frame
+#the mutate function knows to look for these variables in the murders data frame
 #rather than in the workspace. This makes the call much cleaner, because we
 #don't have to keep writing murders$ over and over again
 
