@@ -31,8 +31,8 @@ S<- replicate(B,{
   sum(X)
 })
 mean(S<=0) #We se what the probability of losing money is
-mean(S)
-sd(S)
+mean(S) #expected value of the variable x
+sd(S) #standard error of the variable x
 
 #Histogram
 s <- seq(min(S),max(S),length=100) #creates a sequence from the lowest value to the largest value
