@@ -11,3 +11,11 @@ x<- heights$height[index]
 x
 mean(x)
 sd(x)
+
+#standard unit
+#z = (x - average)/sd
+z<- scale(x) #To covert to standard units
+z
+
+mean(abs(z)<2) #it is almost exactly as 95% which is what the normal distribution predicts
+
