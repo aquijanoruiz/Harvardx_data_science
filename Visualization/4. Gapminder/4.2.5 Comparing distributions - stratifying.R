@@ -64,10 +64,8 @@ gapminder %>%
 gapminder %>%
   filter(year %in% c(1970,2010) & country %in% country_list) %>%
   mutate(region=reorder(region, dollars_per_day, FUN=median)) %>% #to reorder plots by their medium variable
-  ggplot(aes(x=region,y=dollars_per_day,fill=factor(year)))+ #we use fill so that each year gets its color and 
+  ggplot(aes(x=region,y=dollars_per_day,fill=factor(year)))+ #we use fill so that each year gets its color and be considered as factor (categorical variable) 
   geom_boxplot()+ #we don't need to write anything because it has already been defined in ggplo()
   scale_y_continuous(trans = "log2") + #to change the scale to the log scale
   geom_point(show.legend = FALSE)+
   xlab("") + theme(axis.text.x=element_text(angle=90,hjust=1)) #it can rotate the names
-
-  
