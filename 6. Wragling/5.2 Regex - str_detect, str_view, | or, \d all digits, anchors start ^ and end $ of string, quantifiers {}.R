@@ -1,3 +1,4 @@
+#-----------------------------------------------Preparation-----------------------------
 rm(list=ls())
 library(dslabs)
 library(tidyverse)
@@ -140,5 +141,8 @@ animals <- c("cat", "puppy", "Moose", "MONKEY")
 pattern <- "[a-z]{4,5}" #this regex command tells R to look for either 4 or 5 lowercase letters 
 #in a row anywhere in the string. This is true for the animals “puppy” and “Moose”.
 str_detect(animals, pattern)
+
+
+
 
 
