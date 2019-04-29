@@ -1,4 +1,5 @@
 #--------------------------downloading the data-------------------------
+
 rm(list=ls())
 url <- 'http://www.trumptwitterarchive.com/data/realdonaldtrump/%s.json'
 trump_tweets <- map(2009:2017, ~sprintf(url, .x)) %>%
@@ -7,10 +8,12 @@ trump_tweets <- map(2009:2017, ~sprintf(url, .x)) %>%
   mutate(created_at = parse_date_time(created_at,
                                       orders = "a b! d! H!:M!:S! z!* Y!",
                                       tz="EST"))
-library(dslabs)
+
+library(dslabs) #the Trump Tweets database is saved here
 library(lubridate) #to be able to use the hour() function
 library(scales) #to be able to use the percent_format() function
 library(tidyverse)
+
 data("trump_tweets")
 head(trump_tweets)
 names(trump_tweets) #to check the variables
@@ -39,7 +42,9 @@ campaign_tweets <- trump_tweets %>%
 #We can now use data visualization to explore the possibility that two different groups 
 #were tweeting from these devices.
 
-
+library(lubridate) #to be able to use the hour() function
+library(scales) #to be able to use the percent_format() function
+library(tidyverse)
 ds_theme_set()
 campaign_tweets %>%
   mutate(hour = hour(with_tz(created_at, "EST"))) %>% #with_tz provides the time zone you want
@@ -88,7 +93,7 @@ campaign_tweets[i,] %>%
 #------------------------------removing the pictures-----------------------------
 #Removing the links to pictures:
 tweet_words <- campaign_tweets %>% 
-  mutate(text = str_replace_all(text, "https://t.co/[A-Za-z\\d]+|&amp;", ""))  %>%
+  mutate(text = str_replace_all(text, "https://t.co/[A-Za-z\\d]+|&amp;", ""))  %>% #the command replaces strings of the form "https://t.co/any combination of letters and diggits" and strings "&amp;" by empty strings
   unnest_tokens(word, text, token = "regex", pattern = pattern) 
 
 #------------------------------removing the top words-----------------------------
@@ -121,10 +126,134 @@ tweet_words <- campaign_tweets %>%
 
 #------------------------------adding the odds ratio-----------------------------
 android_iphone_or <- tweet_words %>%
-  count(word, source) %>%
+  count(word, source) %>% #to count the number if tweets a word appears
   spread(source, n, fill = 0) %>% #this creates two columns and in each column it fills the n
-  mutate(or = (Android + 0.5) / (sum(Android) - Android + 0.5) / #these are the odds ratio
+  mutate(odds_ratio = (Android + 0.5) / (sum(Android) - Android + 0.5) / #Here we will have many proportions that are 0, so we use the 0.5 correction
            ( (iPhone + 0.5) / (sum(iPhone) - iPhone + 0.5)))
-android_iphone_or %>% arrange(desc(or))
-android_iphone_or %>% arrange(or)
+android_iphone_or %>% arrange(desc(odds_ratio))
+android_iphone_or %>% arrange(odds_ratio)
 
+#------------------------------explanation of the odds ratio---------------------
+
+#            Android[i]
+#------------------------------------
+#            Android[-i]            <-- In the formula we see it as (sum(Android)-Android)
+#------------------------------------
+#            Iphone[i]
+#------------------------------------
+#            Iphone[-i]             <-- In the formula we see it as (sum(iPhone)-iPhone)
+tweet_words[-1,]
+
+#Given that several of these words are overall low frequency words we can impose a filter based on the total frequency.
+android_iphone_or %>% filter(Android+iPhone > 100) %>%
+  arrange(desc(odds_ratio))
+
+android_iphone_or %>% filter(Android+iPhone > 100) %>%
+  arrange(odds_ratio) #if we look at this table we see 0 tweets of #makeamericagreatagain from Android, so if we don't 
+#sum 0.5 when calculating the odds, we would get an error message. That's why it is important to sum 0.5.
+#to understand the numbers we can devide 1/0.00144 or 1/0.00718
+
+#------------------------------sentiment analysis--------------------
+
+#In sentiment analysis we assign a word to one or more "sentiment". Although this approach will miss 
+#context dependent sentiments, such as sarcasm, when performed on large numbers of words, summaries 
+#can provide insights.
+
+#The first step in sentiment analysis is to assign a sentiment to each word. 
+#The tidytext package includes several maps or lexicons in the object sentiments:
+
+table(sentiments$lexicon)
+sentiments #we can see the list of words in the table and the sentiment they belong to
+
+#------------------------------get_sentiments function--------------------
+get_sentiments("bing") #The bing lexicon divides words into positive and negative. 
+#We can see this using the tidytext function get_sentiments
+
+get_sentiments("afinn") #The AFINN lexicon assigns a score between -5 and 5, 
+#with -5 the most negative and 5 the most positive.
+
+get_sentiments("loughran") %>% count(sentiment)
+get_sentiments("nrc") %>% count(sentiment) #The loughran and nrc lexicons provide several different sentiments
+
+#For our analysis, we are interested in exploring the different sentiments of each tweet 
+#so we will use the nrc lexicon
+
+nrc <- sentiments %>%
+  filter(lexicon == "nrc") %>% #we only take the words that can be classified in by the nrc lexicon
+  select(word, sentiment) #we only take the columns with the word and sentiments
+nrc #this table contains all the workds that can be classified in by the nrc lexicon
+
+tweet_words %>% inner_join(nrc, by = "word") %>% #we combine both tables and take the words that appear in both of them.
+  select(source, word, sentiment) %>%
+  sample_n(10)
+
+
+#------------------------------performing quantitative analysis--------------------
+
+sentiment_counts <- tweet_words %>%
+  left_join(nrc, by = "word") %>%
+  count(source, sentiment) %>%
+  spread(source, n) %>%
+  mutate(sentiment = replace_na(sentiment, replace = "none")) #we replace the NAs with "none"
+sentiment_counts
+
+tweet_words %>% group_by(source) %>% summarize(n=n()) #we can see how many words were tweeted accoring 
+#to the device
+
+#------------------------------computing the odds for each sentiment--------------------
+
+#For each sentiment we can compute the odds of being in the device: proportion of words with 
+#sentiment versus proportion of words without and then compute the odds ratio comparing the two devices.
+
+#HERE WE COMPUTE THE ODDS RATIO
+sentiment_counts %>% 
+  mutate(Android=Android/(sum(Android)-Android),
+         iPhone=iPhone/(sum(iPhone)-iPhone),
+         odds_ratio= Android/iPhone) %>%
+  arrange(desc(odds_ratio)) #We do see some differences: the largest three sentiments are disgust, anger, and negative
+
+#HERE WE COMPUTE THE LOG OF THE ODDS RATIO
+log_or <- sentiment_counts %>%
+  mutate( log_or = log( (Android / (sum(Android) - Android)) / (iPhone / (sum(iPhone) - iPhone))),
+          se = sqrt( 1/Android + 1/(sum(Android) - Android) + 1/iPhone + 1/(sum(iPhone) - iPhone)),
+          conf.low = log_or - qnorm(0.975)*se,
+          conf.high = log_or + qnorm(0.975)*se) %>%
+  arrange(desc(log_or))
+
+#----------------------table explaining all the odds, odds ratio, and log of the odds ratio-------
+#TABLE MADE BY ME: this table summarizes all the info
+
+sentiment_counts %>% 
+  mutate(Android_odds=Android/(sum(Android)-Android),
+         iPhone_odds=iPhone/(sum(iPhone)-iPhone),
+         odds_ratio= Android_odds/iPhone_odds,
+         log_odds_ratio= log(odds_ratio),
+         se=sqrt(1/Android + 1/(sum(Android)-Android) + 1/iPhone + 1/(sum(iPhone)-iPhone)), #this is the formula for the se of the odds ration. Check section 16.10.5 of the data science book for more info
+         conf.low = log_odds_ratio - qnorm(0.975)*se,
+         conf.high = log_odds_ratio + qnorm(0.975)*se) %>%
+  arrange(desc(log_odds_ratio))
+
+#----------------------graph of the standard errors of the logs of odds ratio-------
+log_or %>%
+  mutate(sentiment = reorder(sentiment, log_or),) %>% #this does the same as arrange(desc(log_or))
+  ggplot(aes(x = sentiment, ymin = conf.low, ymax = conf.high)) + #this is the aesthetic necessary for geom_errorbar
+  geom_errorbar() + #this is the geom that produces the plot we want
+  geom_point(aes(sentiment, log_or)) + #this produces a point in the middle with the log of the oods ratio
+  ylab("Log odds ratio for association between Android and sentiment") + #we give a name to the y axis
+  coord_flip() #we flip the coordinates for better visialization
+
+#We see that the disgust, anger, negative sadness and fear sentiments are associated with the Android 
+#in a way that is hard to explain by chance alone. We see this because the confidence intervals are
+#far away from zero,
+
+android_iphone_or %>% inner_join(nrc, by = "word") %>%
+  mutate(sentiment = factor(sentiment, levels = log_or$sentiment)) %>% #we need to transorm the sentiment variable from a character into a factor, otherwise we cannot categorize it
+  #we use the levels argument to tell r to sort the levels according to the order of sentiments. To know more watch https://www.youtube.com/watch?v=xkRBfy8_2MU
+  mutate(log_or = log(odds_ratio)) %>% #we take the log of the odds ratio 
+  filter(Android + iPhone > 10 & abs(log_or)>1) %>% #we take only the relevant information. The words that are repeated more than 10 times and the log_or is greater than 1
+  mutate(word = reorder(word, log_or)) %>% #we reorder the words according to log_or
+  ggplot(aes(word, log_or, fill = log_or < 0)) + #the fill argument tells to change the color to the values less than 0
+  facet_wrap(~sentiment, scales = "free_x", nrow = 2) + #this creates multi-panel plots, the default scale for the x axis is fixed, but we want a free scale
+  geom_bar(stat="identity",show.legend = FALSE) + #By default, geom_bar uses stat="bin". This makes the height of each bar equal to the number of cases in each group, 
+  #and it is incompatible with mapping values to the y aesthetic. If you want the heights of the bars to represent values in the data, use stat="identity" and map a value to the y aesthetic.
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) #to justify

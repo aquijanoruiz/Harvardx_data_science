@@ -78,6 +78,19 @@ odds_women
 #The odds ratio is the ratio for these two odds: how many times larger are the odds for men than for women?
 odds_men / odds_women
 
+#-------------------------------------the log of the odds ratio------------------------------
+
+log_or <- log( odds_men / odds_women )
+se <- two_by_two %>%
+  select(-awarded) %>%
+  summarize(se = sqrt(sum(1/men) + sum(1/women))) %>% #this is the standard error formula of the odds ratio
+  pull(se) #this gets the vector, not the tibble table
+se
+
+ci <- log_or + c(-1,1) * qnorm(0.975) * se #this is the confidence interval of the odds ratio
+ci
+
+exp(ci)
 #---------------relationship between odds ratio and p-value of chi-square-----------------------
 
 #Note that the relationship between odds ratios and p-values is not one to one. It depends on the 
