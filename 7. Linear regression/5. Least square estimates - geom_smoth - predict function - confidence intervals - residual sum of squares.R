@@ -127,4 +127,3 @@ galton_heights %>%
 Y_hat <- predict(fit, se.fit = TRUE)
 Y_hat
 names(Y_hat)
-
