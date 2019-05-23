@@ -116,11 +116,11 @@ class(x[ , 1, drop=FALSE]) #we can fix this using the argument drop=FALSE
 dim(x[, 1, drop=FALSE])
 #--------------9. Indexing with matrices-----------------
 #Transforming a matrix into a vector:
-mat <- matrix(1:15, 5, 3)
+mat <- matrix(11:25, 5, 3)
 as.vector(mat)
 
 #Example 1
-mat[mat < 3] <- 0
+mat[mat < 20] <- 0
 mat
 
 #Example 2
@@ -165,7 +165,7 @@ X_mean_0 <- sweep(x, 2, colMeans(x))
 
 #The function sweep actually has another argument that lets you define the arithmetic operation. So to divide
 #by the standard deviation, we do the following:
-x_standardized <- sweep(x_mean_0, 2, colSds(x), FUN = "/")
+x_standardized <- sweep(x_mean_0, 2, colSds(x), FUN = "/") #2 means columns. It means it is going to divide the sd to each column
 
 #-----------------12. Matrix algebra operations-----------------
 
