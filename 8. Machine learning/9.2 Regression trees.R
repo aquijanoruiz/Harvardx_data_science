@@ -1,6 +1,6 @@
 #-------------------------contents------------------------
 #1. Preparing the data
-#2. Partitioning the data
+#2. Partitioning the data (creating the regression tree with the rpart function)
 #2.1 Plotting the decision tree
 #3. Complexity parameter (definition)
 #3.1 Complexity parameter of 0 and minsplit = 2
@@ -16,7 +16,7 @@ data("polls_2008")
 head(polls_2008)
 qplot(day, margin, data = polls_2008)
 
-#------------------------2. Partitioning the data------------------
+#------------------------2. Partitioning the data (creating the regression tree with the rpart function)------------------
 library(rpart) #we use this package
 fit <- rpart(margin ~ ., data = polls_2008)
 
