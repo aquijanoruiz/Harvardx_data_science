@@ -37,7 +37,7 @@ library(ggplot2)
 olive %>% gather(fatty_acid, percentage, -region) %>%
   ggplot(aes(region, percentage, fill = region)) +
   geom_boxplot() +
-  facet_wrap(~fatty_acid, scales = "free") +
+  facet_wrap(~fatty_acid, scales = "free") + #scales="free" makes the scales vary among the graphs
   theme(axis.text.x = element_blank()) #eliminates the labels from the x axis
 
 #This implies that we should be able to build an algorithm that predicts perfectly! We can see this clearly by

@@ -1,5 +1,12 @@
 #-------------------------contents------------------------
-#1. 1. Preparing the data
+#1. Preparing the data
+#2. Partitioning the data
+#2.1 Plotting the decision tree
+#3. Complexity parameter (definition)
+#3.1 Complexity parameter of 0 and minsplit = 2
+#3.2 Pruning a tree
+#3.3 How to choose the correct parameters?
+
 
 #-------------------------1. Preparing the data---------------------
 #To introduce regression trees, we will use the 2008 poll data used in previous sections to describe 
@@ -68,7 +75,7 @@ library(caret)
 set.seed(1)
 train_rpart <- train(margin ~ .,
                      method = "rpart",
-                     tuneGrid = data.frame(cp = seq(0, 0.05, len = 25)),
+                     tuneGrid = data.frame(cp = seq(0, 0.05, len = 25)), #The tuneGrid parameter lets us decide which values the main parameter will take
                      data = polls_2008) #this model uses different coplexities parameters an picks the one that minimizes RMSE
 
 ggplot(train_rpart) #to plot the RMSE 
