@@ -47,7 +47,7 @@ plot(fit)
 #Re-run the Random Forest but this time with a node size of 50 and a maximum of 25 nodes. Remake the plot.
 
 library(randomForest)
-fit <- randomForest(y ~ x, data = dat, nodesize = 25, maxnodes = 25)
+fit <- randomForest(y ~ x, data = dat, nodesize = 50, maxnodes = 25)
 
 dat %>% 
   mutate(y_hat = predict(fit)) %>% 
